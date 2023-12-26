@@ -9,36 +9,38 @@
 		<meta name="viewport" content="width=device-width" />
 		<meta name="generator" content={Astro.generator} />
 		<title>Astro</title>
-		<script src="https://www.google.com/recaptcha/api.js" ></script>
+		<script src="https://www.google.com/recaptcha/api.js" async defer></script>
 	</head>
 	<body class="bg-zinc-600">
-		<div class="flex justify-center items-center h-64">
-			<form action="" method="post" id="demo-form">
-				<fieldset>
-					<label for="userName">
+		<div class="grid justify-items-center content-center max-h-72">
+			<form action="" method="post" id="demo-form" class="border rounded-sm m-5 p-5 border-gray-500">
+				<fieldset class="mb-4">
+					<label for="userName" class="text-white font-semibold" id="lbUserName">
 						Nombre de usuario
-						<input class="border" type="text" id="userName" name="userName">
+						<input class="border" type="text" id="userName" name="userName" pattern="[A-Za-z]+" required >
+						<p class="text-red-500 hidden font-light" id="userNameError"> Completa este campo por favor</p>
 					</label>
 	
 				</fieldset>
 				<div class="space-y-5">
 
-					<div class="g-recaptcha" data-sitekey="6LeKYTwpAAAAABNtoxZ5mtWzzx6yE7Fj-2mve51o"></div>
+					<div class="g-recaptcha" 
+						data-sitekey="6LeKYTwpAAAAABNtoxZ5mtWzzx6yE7Fj-2mve51o"
+						data-callback="onChange"
+						data-action="change">
+					</div>
 				
 					<button class="px-4 rounded-sm bg-red-500 text-white" type="submit">Enviar</button>
-
-					<button 
-						class="g-recaptcha px-4 rounded-sm bg-blue-500 text-white"
-						data-sitekey="6LeKYTwpAAAAABNtoxZ5mtWzzx6yE7Fj-2mve51o"
-						data-callback="onSubmit"
-						data-action="submit"> 
-						Click me to verify the captcha challenge! 
-					</button>
 
 				</div>
 		  
 			</form>
+
+			<div id="success-message" class="hidden text-green-300">El formulario se envió con éxito!</div>
+
+			<div id="reCaptcha-message" class="hidden text-blue-300">Verifica el reCaptcha por favor</div>
 		</div>
+		
 	</body>
 </html>
 
@@ -46,31 +48,67 @@
 
 <script is:inline>
 
-	// const form = document.getElementById("demo-form");
+	const form = document.getElementById("demo-form");
+	const successMessage = document.getElementById('success-message');
+	const reCaptchaMessage = document.getElementById('reCaptcha-message');
+	const userNameError = document.getElementById('userNameError');
+	
 
-	// form?.addEventListener("submit", (e)=>{
-	// 	e.preventDefault();
+	let verifyReCaptcha = false;
 
-	// 	console.log("enviado");
-	// })
-
-
-	function onSubmit(token) {
-	  fetch("/", {
-		method: "POST",
-		body: JSON.stringify({ recaptcha: token })
-	  })
-	  .then((response) => response.json())
-	  .then((gResponse) => {
-		if (gResponse.success) {
-		  // Verificación del Captcha fue un éxito
+	function onChange(token) {
+		if (token) {
+			verifyReCaptcha = true;
 		} else {
-		  // Falló la verificación del Captcha
+			verifyReCaptcha = false;
 		}
-	  })
 	}
+	window.onChange = onChange;
 
-	window.onSubmit = onSubmit;
+
+	form?.addEventListener("submit", (e)=>{
+		e.preventDefault();
+
+		
+
+		const data = Object.fromEntries(new FormData(e.target));
+        const dataContact = JSON.stringify(data);
+		
+		if (verifyReCaptcha) {
+
+			if (form.checkValidity()) {
+				console.log("enviamos el formulario");
+				console.log(dataContact);
+				showSuccessMessage(form, successMessage);
+			} else {
+				console.log("Rellena el campo faltante");
+			}
+
+		} else {
+			reCaptchaMessage?.classList.remove('hidden');
+                setTimeout(() => {
+                    reCaptchaMessage?.classList.add('hidden');
+                }, 2000);
+			console.log("verifica el reCaptcha");
+		}
+	})
+
+
+	function showSuccessMessage(form, successMessage){
+            if(form && successMessage){
+                form?.classList.add('hidden');
+                successMessage?.classList.remove('hidden');
+                setTimeout(() => {
+                    form?.reset();
+                    form?.submit();
+                    form?.classList.remove('hidden');
+                    successMessage?.classList.add('hidden');
+                }, 2000);
+            } else {
+                console.log('elements not found');
+            }
+        }
+
 
 </script>
 
